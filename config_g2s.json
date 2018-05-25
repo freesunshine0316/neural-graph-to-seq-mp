@@ -1,0 +1,50 @@
+{
+    "train_path": "data/training.json",
+    "test_path": "data/dev.json",
+    "word_vec_path": "data/vectors_RwNN.txt.st",
+    "suffix": "base_bch20",
+    "model_dir": "logs",
+    "isLower": true,
+
+    "pointer_gen": true,
+    "use_coverage": true,
+    "attention_vec_size": 100,
+    "batch_size": 20,
+    "beam_size": 10,
+
+    "num_syntax_match_layer": 9,
+    "max_node_num": 200,
+    "max_in_neigh_num": 2,
+    "max_out_neigh_num": 10,
+    "min_answer_len": 0,
+    "max_answer_len": 100,
+    "learning_rate": 0.001,
+    "lambda_l2": 0.001,
+    "dropout_rate": 0.1,
+    "cov_loss_wt": 0.1,
+    "max_epochs": 50,
+    "optimize_type": "adam",
+
+    "with_highway": true,
+    "highway_layer_num": 1,
+
+    "with_char": true,
+    "char_dim": 50,
+    "char_lstm_dim": 50,
+    "max_char_per_word": 20,
+    
+    "attention_type": "hidden_embed",
+    "way_init_decoder": "root",
+    "node_dim": 100,
+    "edgelabel_dim": 50,
+    "neighbor_vector_dim": 100,
+    "fix_word_vec": true,
+    "compress_input": true,
+
+    "gen_hidden_size": 100,
+    "num_softmax_samples": 100,
+    "mode": "ce_train",
+
+    "config_path": "config.json",
+    "generate_config": false
+}
