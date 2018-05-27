@@ -19,7 +19,9 @@ Another alternative is to write your own data loading code according to the form
 
 ## Training
 
-First, modify the PYTHONPATH within [train_g2s.sh](./train_g2s.sh)(for our graph-to-string model) or [train_s2s.sh](./train_s2s.sh)(for baseline). Second, modify config_g2s.json or config_s2s.json. You should pay attention to the field "suffix", which is an identifier of the model being trained and saved. Usually, we use the current experiment setting, such as "bch20_lr1e3_l21e3", as the identifier. Finally, execute the corresponding script file, such as "./train_g2s.sh".
+First, modify the PYTHONPATH within [train_g2s.sh](./train_g2s.sh) (for our graph-to-string model) or [train_s2s.sh](./train_s2s.sh) (for baseline). <br>
+Second, modify config_g2s.json or config_s2s.json. You should pay attention to the field "suffix", which is an identifier of the model being trained and saved. Usually, we use the current experiment setting, such as "bch20_lr1e3_l21e3", as the identifier. <br>
+Finally, execute the corresponding script file, such as "./train_g2s.sh".
 
 ## Decoding with a pretained model
 
