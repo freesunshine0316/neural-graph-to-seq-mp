@@ -5,11 +5,11 @@ This repository contains the code for our paper [A Graph-to-Sequence Model for A
 The code is developed under TensorFlow 1.4.1 
 
 ## Data precrocessing
-Our current data loading [code](./src_g2s/G2S_data_stream.py) requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the simplification result of
+Our current data loading [code](./src_g2s/G2S_data_stream.py) requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the following AMR
 ```
 (d / describe-01 :ARG0 (p / person :name (n / name :op1 "Ryan")) :ARG1 p :ARG2 genius)
 ```
-is simpled as
+can be simplified as
 ```
 describe :arg0 ( person :name ( name :op1 ryan )  )  :arg1 person :arg2 genius
 ```
