@@ -3,14 +3,14 @@
     "test_path": "data/dev.json",
     "word_vec_path": "data/vectors_RwNN.txt.st",
     "suffix": "base_bch20",
-    "model_dir": "logs",
+    "model_dir": "logs_new",
     "isLower": true,
 
     "pointer_gen": true,
     "use_coverage": true,
-    "attention_vec_size": 100,
+    "attention_vec_size": 300,
     "batch_size": 20,
-    "beam_size": 10,
+    "beam_size": 5,
 
     "num_syntax_match_layer": 9,
     "max_node_num": 200,
@@ -30,18 +30,18 @@
 
     "with_char": true,
     "char_dim": 50,
-    "char_lstm_dim": 50,
+    "char_lstm_dim": 100,
     "max_char_per_word": 20,
     
     "attention_type": "hidden_embed",
     "way_init_decoder": "root",
-    "node_dim": 100,
     "edgelabel_dim": 50,
-    "neighbor_vector_dim": 100,
+    "neighbor_vector_dim": 300,
     "fix_word_vec": true,
     "compress_input": true,
+    "compress_input_dim": 300,
 
-    "gen_hidden_size": 100,
+    "gen_hidden_size": 300,
     "num_softmax_samples": 100,
     "mode": "ce_train",
 

@@ -1,0 +1,68 @@
+{
+    "train_path": "data/training.json",
+    "test_path": "data/dev.json",
+    "enc_word_vec_path": "data/vectors.txt.st",
+    "dec_word_vec_path": "data/vectors.txt.st",
+    "suffix": "gold",
+    "model_dir": "logs_s2s",
+    "isLower": true,
+    "two_sent_inputs": false,
+
+    "direction": "bidir",
+    "pointer_gen": true,
+    "use_coverage": true,
+    "switch_qa": false,
+    "attention_vec_size": 500,
+    "cov_loss_wt": 0.1,
+
+    "beam_size": 20,
+
+    "min_answer_len": 0,
+    "max_answer_len": 60,
+    "batch_size": 100,
+    "learning_rate": 0.0008,
+    "lambda_l2": 1e-08,
+    "dropout_rate": 0.2,
+    "max_epochs": 50,
+    "max_epochs_ft": 15,
+    "optimize_type": "adam",
+
+    "with_filter_layer": true,
+    "filter_layer_threshold": 0.2,
+    "with_word_match": true,
+    "with_sequential_match": true,
+    "context_layer_num": 1,
+    "context_lstm_dim": 600,
+
+    "with_lex_decomposition": false,
+    "lex_decompsition_dim": 50,
+    "with_question_passage_word_feature": false,
+
+    "with_phrase_projection": false,
+
+    "with_highway": false,
+    "highway_layer_num": 1,
+    "with_match_highway": false,
+    "with_aggregation_highway": false,
+
+    "with_word": true,
+    "with_char": false,
+    "with_POS": false,
+    "with_NER": false,
+    "POS_dim": 20,
+    "NER_dim": 20,
+    "char_dim": 50,
+    "char_lstm_dim": 100,
+    "compress_input": false,
+    "compress_input_dim": 300,
+    "fix_word_vec": false,
+    "max_passage_len": 100,
+    "max_char_per_word": 10,
+
+    "gen_hidden_size": 600,
+    "num_softmax_samples": 100,
+    "mode": "ce_train",
+
+    "config_path": "config.json",
+    "generate_config": false
+}

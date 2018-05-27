@@ -105,8 +105,6 @@ class G2SDataStream(object):
         for (nodes, in_neigh_indices, in_neigh_edges, out_neigh_indices, out_neigh_edges, sentence, id) in all_instances:
             if options.max_node_num != -1 and len(nodes) > options.max_node_num:
                 continue # remove very long passages
-            if options.max_answer_len < len(sentence):
-                sentence = sentence[:options.max_answer_len] # chunk very long sentences
             in_neigh_indices = [x[:options.max_in_neigh_num] for x in in_neigh_indices]
             in_neigh_edges = [x[:options.max_in_neigh_num] for x in in_neigh_edges]
             out_neigh_indices = [x[:options.max_out_neigh_num] for x in out_neigh_indices]
@@ -118,7 +116,7 @@ class G2SDataStream(object):
                 nodes_chars_idx = char_vocab.to_character_matrix_for_list(nodes, max_char_per_word=options.max_char_per_word)
             in_neigh_edges_idx = [edgelabel_vocab.to_index_sequence_for_list(edges) for edges in in_neigh_edges]
             out_neigh_edges_idx = [edgelabel_vocab.to_index_sequence_for_list(edges) for edges in out_neigh_edges]
-            sentence_idx = word_vocab.to_index_sequence_for_list(sentence)
+            sentence_idx = word_vocab.to_index_sequence_for_list(sentence[:options.max_answer_len])
             instances.append((nodes_idx, nodes_chars_idx,
                 in_neigh_indices, in_neigh_edges_idx, out_neigh_indices, out_neigh_edges_idx, sentence_idx, sentence, id))
 
@@ -128,9 +126,7 @@ class G2SDataStream(object):
         # sort instances based on length
         if isSort:
             all_instances = sorted(all_instances, key=lambda inst: (len(inst[0]), len(inst[-2])))
-        else:
-            random.shuffle(all_instances)
-            random.shuffle(all_instances)
+
         self.num_instances = len(all_instances)
 
         # distribute questions into different buckets
@@ -177,7 +173,7 @@ class G2SBatch(object):
     def __init__(self, instances, options, word_vocab=None):
         self.options = options
 
-        self.instances = instances # list of tuples
+        self.target_ref = [x[-2] for x in instances] # list of tuples
         self.batch_size = len(instances)
         self.vocab = word_vocab
 
@@ -250,12 +246,6 @@ class G2SBatch(object):
         # [batch_size, sent_len_max]
         self.sent_inp = padding_utils.pad_2d_vals(self.sent_inp, len(self.sent_inp), options.max_answer_len)
         self.sent_out = padding_utils.pad_2d_vals(self.sent_out, len(self.sent_out), options.max_answer_len)
-
-    def get_amrside_anonyids(self, anony_ids):
-        assert self.batch_size == 1 # only for beam search
-        if self.options.__dict__.has_key("enc_word_vec_path"):
-            assert self.options.enc_word_vec_path == self.options.dec_word_vec_path # only when enc_vocab == dec_vocab
-        self.amr_anony_ids = set(self.instances[0][0]) & anony_ids # sent1 of inst_0
 
 
 if __name__ == "__main__":

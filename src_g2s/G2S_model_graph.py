@@ -59,7 +59,7 @@ class ModelGraph(object):
             self.encoder_dim = options.neighbor_vector_dim * 2
             self.encoder_states = tf.concat([self.encoder.graph_hiddens, self.encoder.graph_cells], 2)
         elif options.attention_type == 'hidden_embed':
-            self.encoder_dim = options.neighbor_vector_dim + options.node_dim
+            self.encoder_dim = options.neighbor_vector_dim + self.encoder.input_dim
             self.encoder_states = tf.concat([self.encoder.graph_hiddens, self.encoder.node_representations], 2)
         else:
             assert False, '%s not supported yet' % options.attention_type

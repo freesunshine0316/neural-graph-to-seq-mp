@@ -9,8 +9,8 @@ import codecs
 
 from vocab_utils import Vocab
 import namespace_utils
-import G2S_data_stream
-from G2S_model_graph import ModelGraph
+import NP2P_data_stream
+from NP2P_model_graph import ModelGraph
 
 FLAGS = None
 import tensorflow as tf
@@ -41,6 +41,7 @@ def softmax(x):
 def document_bleu(vocab, gen, ref, suffix=''):
     genlex = [vocab.getLexical(x)[1] for x in gen]
     reflex = [[vocab.getLexical(x)[1],] for x in ref]
+    #return metric_utils.evaluate_captions(genlex,reflex)
     genlst = [x.split() for x in genlex]
     reflst = [[x[0].split()] for x in reflex]
     f = codecs.open('gen.txt'+suffix,'w','utf-8')
@@ -67,17 +68,17 @@ def evaluate(sess, valid_graph, devDataStream, options=None, suffix=''):
             accu_value, loss_value = valid_graph.run_ce_training(sess, cur_batch, options, only_eval=True)
             dev_loss += loss_value
             dev_right += accu_value
-            dev_total += np.sum(cur_batch.sent_len)
+            dev_total += np.sum(cur_batch.answer_lengths)
         elif valid_graph.mode == 'evaluate_bleu':
             gen.extend(valid_graph.run_greedy(sess, cur_batch, options).tolist())
-            ref.extend(cur_batch.sent_out.tolist())
+            ref.extend(cur_batch.in_answer_words.tolist())
         else:
             assert False
 
     if valid_graph.mode == 'evaluate':
         return {'dev_loss':dev_loss, 'dev_accu':1.0*dev_right/dev_total, 'dev_right':dev_right, 'dev_total':dev_total, }
     else:
-        return {'dev_bleu':document_bleu(valid_graph.word_vocab,gen,ref,suffix), }
+        return {'dev_bleu':document_bleu(valid_graph.dec_word_vocab,gen,ref,suffix), }
 
 
 
@@ -89,7 +90,7 @@ def main(_):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    path_prefix = log_dir + "/G2S.{}".format(FLAGS.suffix)
+    path_prefix = log_dir + "/NP2P.{}".format(FLAGS.suffix)
     log_file_path = path_prefix + ".log"
     print('Log file path: {}'.format(log_file_path))
     log_file = open(log_file_path, 'wt')
@@ -99,81 +100,75 @@ def main(_):
     # save configuration
     namespace_utils.save_namespace(FLAGS, path_prefix + ".config.json")
 
-    print('Loading train set.')
-    trainset, trn_node, trn_in_neigh, trn_out_neigh, trn_sent = G2S_data_stream.read_amr_file(FLAGS.train_path)
+    print('Loading training set.')
+    trainset, train_ans_len = NP2P_data_stream.read_all_GenerationDatasets(FLAGS.train_path, isLower=FLAGS.isLower)
     print('Number of training samples: {}'.format(len(trainset)))
 
     print('Loading dev set.')
-    devset, tst_node, tst_in_neigh, tst_out_neigh, tst_sent = G2S_data_stream.read_amr_file(FLAGS.test_path)
+    devset, dev_ans_len = NP2P_data_stream.read_all_GenerationDatasets(FLAGS.dev_path, isLower=FLAGS.isLower)
     print('Number of dev samples: {}'.format(len(devset)))
 
     if FLAGS.finetune_path != "":
         print('Loading finetune set.')
-        ftset, ft_node, ft_in_neigh, ft_out_neigh, ft_sent = G2S_data_stream.read_amr_file(FLAGS.finetune_path)
+        ftset, ft_ans_len = NP2P_data_stream.read_all_GenerationDatasets(FLAGS.ft_path, isLower=FLAGS.isLower)
         print('Number of finetune samples: {}'.format(len(ftset)))
     else:
-        ftset, ft_node, ft_in_neigh, ft_out_neigh, ft_sent = (None, 0, 0, 0, 0)
+        ftset, ft_ans_len = (None, 0)
 
-    max_node = max(trn_node, tst_node, ft_node)
-    max_in_neigh = max(trn_in_neigh, tst_in_neigh, ft_in_neigh)
-    max_out_neigh = max(trn_out_neigh, tst_out_neigh, ft_out_neigh)
-    max_sent = max(trn_sent, tst_sent, ft_sent)
-    print('Max node number: {}, while max allowed is {}'.format(max_node, FLAGS.max_node_num))
-    print('Max parent number: {}, truncated to {}'.format(max_in_neigh, FLAGS.max_in_neigh_num))
-    print('Max children number: {}, truncated to {}'.format(max_out_neigh, FLAGS.max_out_neigh_num))
-    print('Max answer length: {}, truncated to {}'.format(max_sent, FLAGS.max_answer_len))
+    max_actual_len = max(train_ans_len, ft_ans_len, dev_ans_len)
+    print('Max answer length: {}, truncated to {}'.format(max_actual_len, FLAGS.max_answer_len))
 
-    word_vocab = None
+    enc_word_vocab = None
+    dec_word_vocab = None
     char_vocab = None
-    edgelabel_vocab = None
     has_pretrained_model = False
     best_path = path_prefix + ".best.model"
     if os.path.exists(best_path + ".index"):
         has_pretrained_model = True
         print('!!Existing pretrained model. Loading vocabs.')
-        word_vocab = Vocab(FLAGS.word_vec_path, fileformat='txt2')
-        print('word_vocab: {}'.format(word_vocab.word_vecs.shape))
-        char_vocab = None
+        if FLAGS.with_word:
+            enc_word_vocab = Vocab(FLAGS.enc_word_vec_path, fileformat='txt2')
+            dec_word_vocab = Vocab(FLAGS.dec_word_vec_path, fileformat='txt2')
+            print('Encoder word vocab: {}'.format(enc_word_vocab.word_vecs.shape))
+            print('Decoder word vocab: {}'.format(dec_word_vocab.word_vecs.shape))
         if FLAGS.with_char:
             char_vocab = Vocab(path_prefix + ".char_vocab", fileformat='txt2')
             print('char_vocab: {}'.format(char_vocab.word_vecs.shape))
-        edgelabel_vocab = Vocab(path_prefix + ".edgelabel_vocab", fileformat='txt2')
     else:
         print('Collecting vocabs.')
-        (allWords, allChars, allEdgelabels) = G2S_data_stream.collect_vocabs(trainset)
+        (allWords, allChars) = NP2P_data_stream.collect_vocabs(trainset)
         print('Number of words: {}'.format(len(allWords)))
         print('Number of allChars: {}'.format(len(allChars)))
-        print('Number of allEdgelabels: {}'.format(len(allEdgelabels)))
 
-        word_vocab = Vocab(FLAGS.word_vec_path, fileformat='txt2')
-        char_vocab = None
+        if FLAGS.with_word:
+            enc_word_vocab = Vocab(FLAGS.enc_word_vec_path, fileformat='txt2')
+            dec_word_vocab = Vocab(FLAGS.dec_word_vec_path, fileformat='txt2')
         if FLAGS.with_char:
             char_vocab = Vocab(voc=allChars, dim=FLAGS.char_dim, fileformat='build')
             char_vocab.dump_to_txt2(path_prefix + ".char_vocab")
-        edgelabel_vocab = Vocab(voc=allEdgelabels, dim=FLAGS.edgelabel_dim, fileformat='build')
-        edgelabel_vocab.dump_to_txt2(path_prefix + ".edgelabel_vocab")
 
-    print('word vocab size {}'.format(word_vocab.vocab_size))
+    print('Encoder word vocab size {}'.format(enc_word_vocab.vocab_size))
+    print('Decoder word vocab size {}'.format(dec_word_vocab.vocab_size))
     sys.stdout.flush()
 
     print('Build DataStream ... ')
-    trainDataStream = G2S_data_stream.G2SDataStream(trainset, word_vocab, char_vocab, edgelabel_vocab, options=FLAGS,
+    trainDataStream = NP2P_data_stream.DataStream(trainset, enc_word_vocab, dec_word_vocab, char_vocab, options=FLAGS,
                  isShuffle=True, isLoop=True, isSort=True)
-
-    devDataStream = G2S_data_stream.G2SDataStream(devset, word_vocab, char_vocab, edgelabel_vocab, options=FLAGS,
+    devDataStream = NP2P_data_stream.DataStream(devset, enc_word_vocab, dec_word_vocab, char_vocab, options=FLAGS,
                  isShuffle=False, isLoop=False, isSort=True)
     print('Number of instances in trainDataStream: {}'.format(trainDataStream.get_num_instance()))
     print('Number of instances in devDataStream: {}'.format(devDataStream.get_num_instance()))
     print('Number of batches in trainDataStream: {}'.format(trainDataStream.get_num_batch()))
     print('Number of batches in devDataStream: {}'.format(devDataStream.get_num_batch()))
     if ftset != None:
-        ftDataStream = G2S_data_stream.G2SDataStream(ftset, word_vocab, char_vocab, edgelabel_vocab, options=FLAGS,
-                 isShuffle=True, isLoop=True, isSort=True)
+        ftDataStream = NP2P_data_stream.DataStream(ftset, enc_word_vocab, dec_word_vocab, char_vocab, options=FLAGS,
+                     isShuffle=True, isLoop=True, isSort=True)
         print('Number of instances in ftDataStream: {}'.format(ftDataStream.get_num_instance()))
         print('Number of batches in ftDataStream: {}'.format(ftDataStream.get_num_batch()))
 
     sys.stdout.flush()
 
+    init_scale = 0.01
     # initialize the best bleu and accu scores for current training session
     best_accu = FLAGS.best_accu if FLAGS.__dict__.has_key('best_accu') else 0.0
     best_bleu = FLAGS.best_bleu if FLAGS.__dict__.has_key('best_bleu') else 0.0
@@ -182,21 +177,20 @@ def main(_):
     if best_bleu > 0.0:
         print('With initial dev BLEU score {}'.format(best_bleu))
 
-    init_scale = 0.01
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-init_scale, init_scale)
         with tf.name_scope("Train"):
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                train_graph = ModelGraph(word_vocab=word_vocab, Edgelabel_vocab=edgelabel_vocab,
-                                         char_vocab=char_vocab, options=FLAGS, mode=FLAGS.mode)
+                train_graph = ModelGraph(enc_word_vocab=enc_word_vocab, dec_word_vocab=dec_word_vocab, char_vocab=char_vocab,
+                        POS_vocab=None, NER_vocab=None, options=FLAGS, mode=FLAGS.mode)
 
         assert FLAGS.mode in ('ce_train', 'rl_train', )
         valid_mode = 'evaluate' if FLAGS.mode == 'ce_train' else 'evaluate_bleu'
 
         with tf.name_scope("Valid"):
             with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                valid_graph = ModelGraph(word_vocab=word_vocab, Edgelabel_vocab=edgelabel_vocab,
-                                         char_vocab=char_vocab, options=FLAGS, mode=valid_mode)
+                valid_graph = ModelGraph(enc_word_vocab=enc_word_vocab, dec_word_vocab=dec_word_vocab, char_vocab=char_vocab,
+                        POS_vocab=None, NER_vocab=None, options=FLAGS, mode=valid_mode)
 
         initializer = tf.global_variables_initializer()
 
@@ -204,6 +198,7 @@ def main(_):
         for var in tf.all_variables():
             if FLAGS.fix_word_vec and "word_embedding" in var.name: continue
             if not var.name.startswith("Model"): continue
+            print(var)
             vars_[var.name.split(":")[0]] = var
         saver = tf.train.Saver(vars_)
 
@@ -216,12 +211,10 @@ def main(_):
 
             if FLAGS.mode == 'rl_train' and abs(best_bleu) < 0.00001:
                 print("Getting BLEU score for the model")
-                sys.stdout.flush()
                 best_bleu = evaluate(sess, valid_graph, devDataStream, options=FLAGS)['dev_bleu']
                 FLAGS.best_bleu = best_bleu
                 namespace_utils.save_namespace(FLAGS, path_prefix + ".config.json")
                 print('BLEU = %.4f' % best_bleu)
-                sys.stdout.flush()
                 log_file.write('BLEU = %.4f\n' % best_bleu)
             if FLAGS.mode == 'ce_train' and abs(best_accu) < 0.00001:
                 print("Getting ACCU score for the model")
@@ -239,7 +232,7 @@ def main(_):
         for step in xrange(max_steps):
             cur_batch = trainDataStream.nextBatch()
             if FLAGS.mode == 'rl_train':
-                loss_value = train_graph.run_rl_training_subsample(sess, cur_batch, FLAGS)
+                loss_value = train_graph.run_rl_training_2(sess, cur_batch, FLAGS)
             elif FLAGS.mode == 'ce_train':
                 loss_value = train_graph.run_ce_training(sess, cur_batch, FLAGS)
             total_loss += loss_value
@@ -248,9 +241,10 @@ def main(_):
                 print('{} '.format(step), end="")
                 sys.stdout.flush()
 
+
             # Save a checkpoint and evaluate the model periodically.
             if (step + 1) % trainDataStream.get_num_batch() == 0 or (step + 1) == max_steps or \
-                    (trainDataStream.get_num_batch() > 10000 and (step+1)%2000 == 0):
+                     (trainDataStream.get_num_batch() > 10000 and (step + 1) % 2000 == 0):
                 print()
                 duration = time.time() - start_time
                 print('Step %d: loss = %.2f (%.3f sec)' % (step, total_loss, duration))
@@ -269,12 +263,12 @@ def main(_):
 
     log_file.close()
 
-
 def validate_and_save(sess, saver, FLAGS, log_file,
     devDataStream, valid_graph, path_prefix, best_accu, best_bleu):
+    # Evaluate against the validation set.
     start_time = time.time()
     print('Validation Data Eval:')
-    res_dict = evaluate(sess, valid_graph, devDataStream, options=FLAGS)
+    res_dict = evaluate(sess, valid_graph, devDataStream, options=FLAGS, suffix=str(step))
     if valid_graph.mode == 'evaluate':
         dev_loss = res_dict['dev_loss']
         dev_accu = res_dict['dev_accu']
@@ -305,6 +299,9 @@ def validate_and_save(sess, saver, FLAGS, log_file,
     duration = time.time() - start_time
     print('Duration %.3f sec' % (duration))
     sys.stdout.flush()
+
+    log_file.write('Duration %.3f sec\n' % (duration))
+    log_file.flush()
     return best_accu, best_bleu
 
 
@@ -312,7 +309,8 @@ def fine_tune(sess, saver, FLAGS, log_file,
     ftDataStream, devDataStream, train_graph, valid_graph, path_prefix, best_accu, best_bleu):
     print('=====Start the fine tuning.')
     sys.stdout.flush()
-    max_steps = ftDataStream.get_num_batch() * 3
+    train_size = ftDataStream.get_num_batch()
+    max_steps = train_size * 3
     best_path = path_prefix + ".best.model"
     total_loss = 0.0
     start_time = time.time()
@@ -336,11 +334,10 @@ def fine_tune(sess, saver, FLAGS, log_file,
             sys.stdout.flush()
             log_file.write('Step %d: loss = %.2f (%.3f sec)\n' % (step, total_loss, duration))
             log_file.flush()
+            total_loss = 0.0
+
             best_accu, best_bleu = validate_and_save(sess, saver, FLAGS, log_file,
                     devDataStream, valid_graph, path_prefix, best_accu, best_bleu)
-            total_loss = 0.0
-            start_time = time.time()
-
     print('=====End the fine tuning.')
     sys.stdout.flush()
     return best_accu, best_bleu
@@ -353,11 +350,20 @@ def enrich_options(options):
     if not options.__dict__.has_key("CE_loss"):
         options.__dict__["CE_loss"] = False
 
+    if not options.__dict__.has_key("infile_format"):
+        options.__dict__["infile_format"] = "plain"
+
+    if not options.__dict__.has_key("with_target_lattice"):
+        options.__dict__["with_target_lattice"] = False
+
+    if not options.__dict__.has_key("add_first_word_prob_for_phrase"):
+        options.__dict__["add_first_word_prob_for_phrase"] = False
+
+    if not options.__dict__.has_key("pretrain_with_max_matching"):
+        options.__dict__["pretrain_with_max_matching"] = False
+
     if not options.__dict__.has_key("reward_type"):
         options.__dict__["reward_type"] = "bleu"
-
-    if not options.__dict__.has_key("way_init_decoder"):
-        options.__dict__["way_init_decoder"] = 'zero'
 
     return options
 
@@ -367,7 +373,7 @@ if __name__ == '__main__':
     parser.add_argument('--config_path', type=str, help='Configuration file.')
 
     #os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-    #os.environ["CUDA_VISIBLE_DEVICES"]="2"
+    #os.environ["CUDA_VISIBLE_DEVICES"]="3"
 
     print("CUDA_VISIBLE_DEVICES " + os.environ['CUDA_VISIBLE_DEVICES'])
     FLAGS, unparsed = parser.parse_known_args()
