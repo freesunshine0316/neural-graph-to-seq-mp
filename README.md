@@ -23,6 +23,10 @@ First, modify the PYTHONPATH within [train_g2s.sh](./train_g2s.sh) (for our grap
 Second, modify config_g2s.json or config_s2s.json. You should pay attention to the field "suffix", which is an identifier of the model being trained and saved. We usually use the experiment setting, such as "bch20_lr1e3_l21e3", as the identifier. <br>
 Finally, execute the corresponding script file, such as "./train_g2s.sh".
 
+### Using large-scale automatic AMRs
+
+In this setting, we follow [Konstas et al., (2017)](https://arxiv.org/abs/1704.08381) to take the large-scale automatic data as the training set, with the original gold data being the finetune set. To train in this way, you need add a new field "finetune_path" in the configuration file and point it to the gold data. Then, point "train_path" to the automatic data. 
+
 ## Decoding with a pretained model
 
 Simply execute the corresponding decoding script with one argument being the identifier of the model you want to use.
