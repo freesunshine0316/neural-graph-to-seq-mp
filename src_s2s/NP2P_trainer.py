@@ -265,6 +265,7 @@ def main(_):
 
 def validate_and_save(sess, saver, FLAGS, log_file,
     devDataStream, valid_graph, path_prefix, best_accu, best_bleu):
+    best_path = path_prefix + ".best.model"
     # Evaluate against the validation set.
     start_time = time.time()
     print('Validation Data Eval:')
