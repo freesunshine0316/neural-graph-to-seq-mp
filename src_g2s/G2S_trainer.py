@@ -205,6 +205,7 @@ def main(_):
             if FLAGS.fix_word_vec and "word_embedding" in var.name: continue
             if not var.name.startswith("Model"): continue
             vars_[var.name.split(":")[0]] = var
+            print(var)
         saver = tf.train.Saver(vars_)
 
         sess = tf.Session()

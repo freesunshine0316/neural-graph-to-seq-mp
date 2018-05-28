@@ -157,8 +157,6 @@ def run_beam_search(sess, model, vocab, batch, options):
 
     sent_stop_id = vocab.getIndex('</s>')
 
-    batch.get_amrside_anonyids(vocab.anony_ids)
-
     # Initialize this first hypothesis
     context_t = np.zeros([model.encoder_dim]) # [encode_dim]
     coverage_t = np.zeros((encoder_states.shape[1])) # [passage_len]
@@ -288,17 +286,13 @@ if __name__ == '__main__':
 
 
     print('Loading test set from {}.'.format(in_path))
-    if FLAGS.infile_format == 'fof':
-        testset, _, _, _, _ = G2S_data_stream.read_amr_from_fof(in_path)
-    else:
-        testset, _, _, _, _ = G2S_data_stream.read_amr_file(in_path)
+    testset, _, _, _, _ = G2S_data_stream.read_amr_file(in_path)
     print('Number of samples: {}'.format(len(testset)))
 
     print('Build DataStream ... ')
     batch_size=-1
     if mode not in ('pointwise', 'multinomial', 'greedy', 'greedy_evaluate', ):
         batch_size = 1
-        word_vocab.get_anony_ids()
 
     devDataStream = G2S_data_stream.G2SDataStream(testset, word_vocab, char_vocab, edgelabel_vocab, options=FLAGS,
                  isShuffle=False, isLoop=False, isSort=True, batch_size=batch_size)
@@ -396,11 +390,11 @@ if __name__ == '__main__':
             else: # beam search
                 print('Instance {}'.format(i))
                 hyps = run_beam_search(sess, valid_graph, word_vocab, cur_batch, FLAGS)
-                outfile.write(cur_batch.instances[0][-1] + "\n")
-                outfile.write(' '.join(cur_batch.instances[0][-2]).encode('utf-8') + "\n")
+                outfile.write(cur_batch.id[0] + "\n")
+                outfile.write(' '.join(cur_batch.target_ref[0]).encode('utf-8') + "\n")
                 for j in xrange(1):
                     hyp = hyps[j]
-                    cur_passage = cur_batch.instances[0][0]
+                    cur_passage = cur_batch.amr_node[0]
                     cur_sent = hyp.idx_seq_to_string(cur_passage, word_vocab, FLAGS)
                     outfile.write(cur_sent.encode('utf-8') + "\n")
                 outfile.write("--------\n")

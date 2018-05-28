@@ -173,6 +173,8 @@ class G2SBatch(object):
     def __init__(self, instances, options, word_vocab=None):
         self.options = options
 
+        self.amr_node = [x[0] for x in instances]
+        self.id = [x[-1] for x in instances]
         self.target_ref = [x[-2] for x in instances] # list of tuples
         self.batch_size = len(instances)
         self.vocab = word_vocab

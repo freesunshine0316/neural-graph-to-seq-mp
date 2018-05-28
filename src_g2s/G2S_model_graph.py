@@ -9,21 +9,6 @@ import random
 from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 cc = SmoothingFunction()
 
-import metric_utils
-
-from pythonrouge.pythonrouge import Pythonrouge
-ROUGE_path = '/u/nalln478/pythonrouge/pythonrouge/RELEASE-1.5.5/ROUGE-1.5.5.pl'
-data_path = '/u/nalln478/pythonrouge/pythonrouge/RELEASE-1.5.5/data'
-
-def sentence_rouge(reflex, genlex):
-    rouge = Pythonrouge(n_gram=2, ROUGE_SU4=True, ROUGE_L=True, stemming=True, stopwords=True, word_level=True, length_limit=True, \
-            length=50, use_cf=False, cf=95, scoring_formula="average", resampling=True, samples=1000, favor=True, p=0.5)
-    genlex = [[genlex,]]
-    reflex = [[[reflex,]]]
-    setting_file = rouge.setting(files=False, summary=genlex, reference=reflex)
-    result = rouge.eval_rouge(setting_file, recall_only=False, ROUGE_path=ROUGE_path, data_path=data_path)
-    return result['ROUGE-L-F']
-
 class ModelGraph(object):
     def __init__(self, word_vocab, char_vocab, Edgelabel_vocab, options=None, mode='ce_train'):
         # here 'mode', whose value can be:
@@ -342,5 +327,4 @@ class ModelGraph(object):
 if __name__ == '__main__':
     summary = " Tokyo is the one of the biggest city in the world."
     reference = "The capital of Japan, Tokyo, is the center of Japanese economy."
-    print sentence_rouge(reference, summary)
 

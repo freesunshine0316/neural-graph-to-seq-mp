@@ -269,7 +269,7 @@ def validate_and_save(sess, saver, FLAGS, log_file,
     # Evaluate against the validation set.
     start_time = time.time()
     print('Validation Data Eval:')
-    res_dict = evaluate(sess, valid_graph, devDataStream, options=FLAGS, suffix=str(step))
+    res_dict = evaluate(sess, valid_graph, devDataStream, options=FLAGS)
     if valid_graph.mode == 'evaluate':
         dev_loss = res_dict['dev_loss']
         dev_accu = res_dict['dev_accu']
