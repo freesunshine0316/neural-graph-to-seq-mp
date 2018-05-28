@@ -3,7 +3,7 @@
     "test_path": "data/dev.json",
     "word_vec_path": "data/vectors_RwNN.txt.st",
     "suffix": "base_bch20",
-    "model_dir": "logs_new",
+    "model_dir": "logs_g2s",
     "isLower": true,
 
     "pointer_gen": true,

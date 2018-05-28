@@ -321,10 +321,9 @@ class Vocab(object):
             seq.append(idx)
         return seq
 
-    def to_character_matrix(self, sentence, max_char_per_word=-1):
-        sentence = sentence.strip()
+    def to_character_matrix_for_list(self, sentence, max_char_per_word=-1):
         seq = []
-        for word in re.split('\\s+', sentence):
+        for word in sentence:
             cur_seq = []
             for i in xrange(len(word)):
                 cur_char = word[i]
@@ -338,6 +337,9 @@ class Vocab(object):
                 cur_seq = cur_seq[:max_char_per_word]
             seq.append(cur_seq)
         return seq
+
+    def to_character_matrix(self, sentence, max_char_per_word=-1):
+        return self.to_character_matrix_for_list(re.split('\\s+',sentence.strip()), max_char_per_word)
 
     def to_index_sequence4binary_features(self, sentence):
         sentence = sentence.strip().lower()

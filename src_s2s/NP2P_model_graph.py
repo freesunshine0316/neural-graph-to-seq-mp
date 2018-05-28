@@ -11,21 +11,6 @@ import random
 from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
 cc = SmoothingFunction()
 
-import metric_utils
-
-from pythonrouge.pythonrouge import Pythonrouge
-ROUGE_path = '/u/nalln478/pythonrouge/pythonrouge/RELEASE-1.5.5/ROUGE-1.5.5.pl'
-data_path = '/u/nalln478/pythonrouge/pythonrouge/RELEASE-1.5.5/data'
-
-def sentence_rouge(reflex, genlex):
-    rouge = Pythonrouge(n_gram=2, ROUGE_SU4=True, ROUGE_L=True, stemming=True, stopwords=True, word_level=True, length_limit=True, \
-            length=50, use_cf=False, cf=95, scoring_formula="average", resampling=True, samples=1000, favor=True, p=0.5)
-    genlex = [[genlex,]]
-    reflex = [[[reflex,]]]
-    setting_file = rouge.setting(files=False, summary=genlex, reference=reflex)
-    result = rouge.eval_rouge(setting_file, recall_only=False, ROUGE_path=ROUGE_path, data_path=data_path)
-    return result['ROUGE-L-F']
-
 class ModelGraph(object):
     def __init__(self, enc_word_vocab=None, dec_word_vocab=None, char_vocab=None, POS_vocab=None, NER_vocab=None, options=None, mode='ce_train'):
 
@@ -262,15 +247,6 @@ class ModelGraph(object):
         feed_dict[self.in_answer_words] = rl_outputs
         feed_dict[self.answer_lengths] = rl_input_lengths
 
-        if options.two_sent_inputs:
-            feed_dict[self.question_lengths] = batch.sent3_length
-            if options.with_word: feed_dict[self.in_question_words] = batch.sent3_word
-            if options.with_char:
-                feed_dict[self.question_char_lengths] = batch.sent3_char_lengths
-                feed_dict[self.in_question_chars] = batch.sent3_chars
-            if options.with_POS: feed_dict[self.in_question_POSs] = batch.sent3_POS
-            if options.with_NER: self.in_question_NERs = batch.sent3_NER
-
         _, loss = sess.run([self.train_op, self.loss], feed_dict)
         return loss
 
@@ -326,15 +302,6 @@ class ModelGraph(object):
         feed_dict[self.in_answer_words] = rl_outputs
         feed_dict[self.answer_lengths] = rl_input_lengths
 
-        if options.two_sent_inputs:
-            feed_dict[self.question_lengths] = batch.sent3_length
-            if options.with_word: feed_dict[self.in_question_words] = batch.sent3_word
-            if options.with_char:
-                feed_dict[self.question_char_lengths] = batch.sent3_char_lengths
-                feed_dict[self.in_question_chars] = batch.sent3_chars
-            if options.with_POS: feed_dict[self.in_question_POSs] = batch.sent3_POS
-            if options.with_NER: self.in_question_NERs = batch.sent3_NER
-
         _, loss = sess.run([self.train_op, self.loss], feed_dict)
         return loss
 
@@ -348,22 +315,6 @@ class ModelGraph(object):
         if options.with_POS: feed_dict[self.in_passage_POSs] = batch.sent1_POS
         if options.with_NER: self.in_passage_NERs = batch.sent1_NER
 
-        if options.two_sent_inputs:
-            feed_dict[self.question_lengths] = batch.sent3_length
-            if options.with_word: feed_dict[self.in_question_words] = batch.sent3_word
-            if options.with_char:
-                feed_dict[self.question_char_lengths] = batch.sent3_char_lengths
-                feed_dict[self.in_question_chars] = batch.sent3_chars
-            if options.with_POS: feed_dict[self.in_question_POSs] = batch.sent3_POS
-            if options.with_NER: self.in_question_NERs = batch.sent3_NER
-
-        if options.with_phrase_projection:
-            feed_dict[self.max_phrase_size] = batch.max_phrase_size
-            feed_dict[self.phrase_starts] = batch.phrase_starts
-            feed_dict[self.phrase_ends] = batch.phrase_ends
-            feed_dict[self.phrase_idx] = batch.phrase_idx
-            feed_dict[self.phrase_lengths] = batch.phrase_lengths
-
         if only_feed_dict:
             return feed_dict
 
@@ -373,5 +324,4 @@ class ModelGraph(object):
 if __name__ == '__main__':
     summary = " Tokyo is the one of the biggest city in the world."
     reference = "The capital of Japan, Tokyo, is the center of Japanese economy."
-    print sentence_rouge(reference, summary)
 

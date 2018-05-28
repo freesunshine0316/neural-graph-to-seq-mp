@@ -105,7 +105,7 @@ def main(_):
     print('Number of training samples: {}'.format(len(trainset)))
 
     print('Loading dev set.')
-    devset, dev_ans_len = NP2P_data_stream.read_all_GenerationDatasets(FLAGS.dev_path, isLower=FLAGS.isLower)
+    devset, dev_ans_len = NP2P_data_stream.read_all_GenerationDatasets(FLAGS.test_path, isLower=FLAGS.isLower)
     print('Number of dev samples: {}'.format(len(devset)))
 
     if FLAGS.finetune_path != "":

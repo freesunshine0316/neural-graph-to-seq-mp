@@ -3,7 +3,6 @@ import re
 import numpy as np
 import random
 import padding_utils
-from sent_utils import QASentence
 import phrase_lattice_utils
 
 def read_text_file(text_file):
@@ -71,7 +70,7 @@ class DataStream(object):
                 print('==============')
             if options.max_passage_len != -1: sent1_idx = sent1_idx[:options.max_passage_len]
             if options.max_answer_len != -1: sent2_idx = sent2_idx[:options.max_answer_len]
-            instances.append((sent1_idx, sent2_idx, sent2))
+            instances.append((sent1_idx, sent2_idx, sent1, sent2))
 
         all_questions = instances
         instances = None
@@ -90,7 +89,7 @@ class DataStream(object):
             cur_questions = []
             for i in xrange(batch_start, batch_end):
                 cur_questions.append(all_questions[i])
-            cur_batch = QAQuestionBatch(cur_questions, options, word_vocab=dec_word_vocab, char_vocab=char_vocab)
+            cur_batch = Batch(cur_questions, options, word_vocab=dec_word_vocab, char_vocab=char_vocab)
             self.batches.append(cur_batch)
 
         self.num_batch = len(self.batches)
@@ -123,7 +122,7 @@ class DataStream(object):
         if i>= self.num_batch: return None
         return self.batches[i]
 
-class QAQuestionBatch(object):
+class Batch(object):
     def __init__(self, instances, options, word_vocab=None, char_vocab=None, POS_vocab=None, NER_vocab=None):
         self.options = options
 
@@ -136,9 +135,9 @@ class QAQuestionBatch(object):
         # create length
         self.sent1_length = [] # [batch_size]
         self.sent2_length = [] # [batch_size]
-        for (sent1, sent2, _) in instances:
-            self.sent1_length.append(len(sent1))
-            self.sent2_length.append(min(len(sent2)+1, options.max_answer_len))
+        for (sent1_idx, sent2_idx, _, _) in instances:
+            self.sent1_length.append(len(sent1_idx))
+            self.sent2_length.append(min(len(sent2_idx)+1, options.max_answer_len))
         self.sent1_length = np.array(self.sent1_length, dtype=np.int32)
         self.sent2_length = np.array(self.sent2_length, dtype=np.int32)
 
@@ -149,18 +148,27 @@ class QAQuestionBatch(object):
             self.sent1_word = [] # [batch_size, sent1_len]
             self.sent2_word = [] # [batch_size, sent2_len]
             self.sent2_input_word = []
-            for (sent1, sent2, _) in instances:
-                self.sent1_word.append(sent1)
-                self.sent2_word.append(sent2+[end_id])
-                self.sent2_input_word.append([start_id]+sent2)
-            self.sent1_word = padding_utils.pad_2d_vals(self.sent1_word, len(self.sent1_word), options.max_passage_len)
-            self.sent2_word = padding_utils.pad_2d_vals(self.sent2_word, len(self.sent2_word), options.max_answer_len)
-            self.sent2_input_word = padding_utils.pad_2d_vals(self.sent2_input_word, len(self.sent2_input_word), options.max_answer_len)
+            for (sent1_idx, sent2_idx, _, _) in instances:
+                self.sent1_word.append(sent1_idx)
+                self.sent2_word.append(sent2_idx+[end_id])
+                self.sent2_input_word.append([start_id]+sent2_idx)
+            self.sent1_word = padding_utils.pad_2d_vals(self.sent1_word, len(instances), np.max(self.sent1_length))
+            self.sent2_word = padding_utils.pad_2d_vals(self.sent2_word, len(instances), options.max_answer_len)
+            self.sent2_input_word = padding_utils.pad_2d_vals(self.sent2_input_word, len(instances), options.max_answer_len)
 
             self.in_answer_words = self.sent2_word
             self.gen_input_words = self.sent2_input_word
             self.answer_lengths = self.sent2_length
 
+        if options.with_char:
+            self.sent1_char = [] # [batch_size, sent1_len]
+            self.sent1_char_lengths = []
+            for (_, _, sent1, sent2) in instances:
+                sent1_char_idx = char_vocab.to_character_matrix_for_list(sent1.split()[:options.max_passage_len])
+                self.sent1_char.append(sent1_char_idx)
+                self.sent1_char_lengths.append([len(x) for x in sent1_char_idx])
+            self.sent1_char = padding_utils.pad_3d_vals_no_size(self.sent1_char)
+            self.sent1_char_lengths = padding_utils.pad_2d_vals_no_size(self.sent1_char_lengths)
 
     def build_phrase_vocabs(self):
         self.phrase_vocabs = []

@@ -183,7 +183,7 @@ class G2SBatch(object):
         for (nodes_idx, nodes_chars_idx, in_neigh_indices, in_neigh_edges_idx, out_neigh_indices, out_neigh_edges_idx,
                 sentence_idx, sentence, id) in instances:
             self.node_num.append(len(nodes_idx))
-            self.sent_len.append(len(sentence_idx)+1 if len(sentence_idx) < options.max_answer_len else len(sentence_idx))
+            self.sent_len.append(min(len(sentence_idx)+1, options.max_answer_len))
         self.node_num = np.array(self.node_num, dtype=np.int32)
         self.sent_len = np.array(self.sent_len, dtype=np.int32)
 

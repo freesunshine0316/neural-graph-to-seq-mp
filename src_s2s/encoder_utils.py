@@ -64,18 +64,19 @@ class SeqEncoder(object):
             passage_len = input_shape[1]
             p_char_len = input_shape[2]
             char_dim = self.char_vocab.word_dim
-            self.char_embedding = tf.get_variable("char_embedding", initializer=tf.constant(self.char_vocab.word_vecs), dtype=tf.float32)
-
-            in_passage_char_repres = tf.nn.embedding_lookup(self.char_embedding, self.in_passage_chars) # [batch_size, passage_len, p_char_len, char_dim]
+            self.char_embedding = tf.get_variable("char_embedding",
+                    initializer=tf.constant(self.char_vocab.word_vecs), dtype=tf.float32)
+            in_passage_char_repres = tf.nn.embedding_lookup(self.char_embedding,
+                    self.in_passage_chars) # [batch_size, passage_len, p_char_len, char_dim]
             in_passage_char_repres = tf.reshape(in_passage_char_repres, shape=[-1, p_char_len, char_dim])
             passage_char_lengths = tf.reshape(self.passage_char_lengths, [-1])
             with tf.variable_scope('char_lstm'):
                 # lstm cell
                 char_lstm_cell = tf.contrib.rnn.BasicLSTMCell(options.char_lstm_dim)
                 # dropout
-                if is_training: char_lstm_cell = tf.contrib.rnn.DropoutWrapper(char_lstm_cell, output_keep_prob=(1 - options.dropout_rate))
+                if is_training: char_lstm_cell = tf.contrib.rnn.DropoutWrapper(char_lstm_cell,
+                        output_keep_prob=(1 - options.dropout_rate))
                 char_lstm_cell = tf.contrib.rnn.MultiRNNCell([char_lstm_cell])
-
                 # passage representation
                 passage_char_outputs = tf.nn.dynamic_rnn(char_lstm_cell, in_passage_char_repres,
                         sequence_length=passage_char_lengths,dtype=tf.float32)[0]
@@ -85,28 +86,6 @@ class SeqEncoder(object):
 
             in_passage_repres.append(passage_char_outputs)
             input_dim += options.char_lstm_dim
-
-        if options.with_POS and self.POS_vocab is not None:
-            self.POS_embedding = tf.get_variable("POS_embedding", initializer=tf.constant(self.POS_vocab.word_vecs), dtype=tf.float32)
-
-            in_passage_POS_repres = tf.nn.embedding_lookup(self.POS_embedding, self.in_passage_POSs) # [batch_size, passage_len, POS_dim]
-            in_passage_repres.append(in_passage_POS_repres)
-
-            input_shape = tf.shape(self.in_passage_POSs)
-            batch_size = input_shape[0]
-            passage_len = input_shape[1]
-            input_dim += self.POS_vocab.word_dim
-
-        if options.with_NER and self.NER_vocab is not None:
-            self.NER_embedding = tf.get_variable("NER_embedding", initializer=tf.constant(self.NER_vocab.word_vecs), dtype=tf.float32)
-
-            in_passage_NER_repres = tf.nn.embedding_lookup(self.NER_embedding, self.in_passage_NERs) # [batch_size, passage_len, NER_dim]
-            in_passage_repres.append(in_passage_NER_repres)
-
-            input_shape = tf.shape(self.in_passage_NERs)
-            batch_size = input_shape[0]
-            passage_len = input_shape[1]
-            input_dim += self.NER_vocab.word_dim
 
         in_passage_repres = tf.concat(in_passage_repres, 2) # [batch_size, passage_len, dim]
 
