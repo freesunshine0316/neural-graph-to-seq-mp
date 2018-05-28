@@ -134,15 +134,9 @@ class Hypothesis(object):
         word_size = vocab.vocab_size + 1
         all_words = []
         for i, idx in enumerate(self.tokens):
-            if idx < word_size:
-                cur_word = vocab.getWord(idx)
-                #if cur_word == 'UNK':
-                #    cur_word = passage.words[self.attn_ids[i]]
-            else:
-                cur_word = id2phrase[idx]
-                if not options.withTextChunk:
-                    items = re.split('-', cur_word)
-                    cur_word = passage.getTokChunk(int(items[0]), int(items[1]))
+            cur_word = vocab.getWord(idx)
+            if cur_word == 'UNK':
+                cur_word = passage[self.attn_ids[i]]
             all_words.append(cur_word)
         return " ".join(all_words[1:])
 
@@ -317,7 +311,7 @@ if __name__ == '__main__':
     print('Build DataStream ... ')
     batch_size = -1
     if mode not in ('pointwise', 'multinomial', 'greedy', 'greedy_evaluate', ): batch_size = 1
-    devDataStream = NP2P_data_stream.QADataStream(testset, enc_word_vocab, dec_word_vocab, char_vocab, options=FLAGS,
+    devDataStream = NP2P_data_stream.DataStream(testset, enc_word_vocab, dec_word_vocab, char_vocab, options=FLAGS,
                  isShuffle=False, isLoop=False, isSort=True, batch_size=batch_size)
     print('Number of instances in testDataStream: {}'.format(devDataStream.get_num_instance()))
     print('Number of batches in testDataStream: {}'.format(devDataStream.get_num_batch()))
@@ -346,98 +340,38 @@ if __name__ == '__main__':
 
         total = 0
         correct = 0
-        if mode.endswith('evaluate'):
-            ref_outfile = open(out_path+ ".ref", 'wt')
-            pred_outfile = open(out_path+ ".pred", 'wt')
-        else:
-            outfile = open(out_path, 'wt')
+        outfile = open(out_path, 'wt')
         total_num = devDataStream.get_num_batch()
         devDataStream.reset()
         total_dur = 0
         for i in range(total_num):
             cur_batch = devDataStream.get_batch(i)
-            if mode == 'pointwise':
-                (sentences, prediction_lengths, generator_input_idx,
-                 generator_output_idx) = search(sess, valid_graph, dec_word_vocab, cur_batch, FLAGS, decode_mode=mode)
-                for j in xrange(cur_batch.batch_size):
-                    cur_total = cur_batch.answer_lengths[j]
-                    cur_correct = 0
-                    for k in xrange(cur_total):
-                        if generator_output_idx[j,k]== cur_batch.in_answer_words[j,k]: cur_correct+=1.0
-                    total += cur_total
-                    correct += cur_correct
-                    outfile.write(cur_batch.instances[j][1].tokText.encode('utf-8') + "\n")
-                    outfile.write(sentences[j].encode('utf-8') + "\n")
-                    outfile.write("========\n")
-                outfile.flush()
-                print('Current dev accuracy is %d/%d=%.2f' % (correct, total, correct/ float(total) * 100))
-            elif mode in ['greedy', 'multinomial']:
+            if mode in ['greedy', 'multinomial']:
                 print('Batch {}'.format(i))
                 (sentences, prediction_lengths, generator_input_idx,
                  generator_output_idx) = search(sess, valid_graph, dec_word_vocab, cur_batch, FLAGS, decode_mode=mode)
                 for j in xrange(cur_batch.batch_size):
-                    outfile.write(cur_batch.instances[j][1].ID_num.encode('utf-8') + "\n")
-                    outfile.write(cur_batch.instances[j][1].tokText.encode('utf-8') + "\n")
+                    outfile.write(cur_batch.id[j].encode('utf-8') + "\n")
+                    outfile.write(cur_batch.target_ref[j].encode('utf-8') + "\n")
                     outfile.write(sentences[j].encode('utf-8') + "\n")
-                    outfile.write(str(prediction_lengths[j])+ "\n")
                     outfile.write("========\n")
-                outfile.flush()
-            elif mode == 'greedy_evaluate':
-                print('Batch {}'.format(i))
-                (sentences, prediction_lengths, generator_input_idx,
-                generator_output_idx) = search(sess, valid_graph, dec_word_vocab, cur_batch, FLAGS, decode_mode="greedy")
-                for j in xrange(cur_batch.batch_size):
-                    ref_outfile.write(cur_batch.instances[j][1].tokText.encode('utf-8') + "\n")
-                    pred_outfile.write(sentences[j].encode('utf-8') + "\n")
-                ref_outfile.flush()
-                pred_outfile.flush()
-            elif mode == 'beam_evaluate':
-                print('Instance {}'.format(i))
-                ref_outfile.write(cur_batch.instances[0][1].tokText.encode('utf-8') + "\n")
-                ref_outfile.flush()
-                hyps, _ = run_beam_search(sess, valid_graph, dec_word_vocab, cur_batch, FLAGS)
-                cur_passage = cur_batch.instances[0][0]
-                cur_id2phrase = None
-                if FLAGS.with_phrase_projection: (cur_phrase2id, cur_id2phrase) = cur_batch.phrase_vocabs[0]
-                cur_sent = hyps[0].idx_seq_to_string(cur_passage, cur_id2phrase, dec_word_vocab, FLAGS)
-                pred_outfile.write(cur_sent.encode('utf-8') + "\n")
-                pred_outfile.flush()
-            elif mode == 'beam_search':
-                print('Instance {}'.format(i))
-                hyps, dur = run_beam_search(sess, valid_graph, word_vocab, cur_batch, FLAGS)
-                total_dur += dur
-                outfile.write("Input: " + cur_batch.instances[0][0].tokText.encode('utf-8') + "\n")
-                outfile.write("Truth: " + cur_batch.instances[0][1].tokText.encode('utf-8') + "\n")
-                for j in xrange(len(hyps)):
-                    hyp = hyps[j]
-                    cur_passage = cur_batch.instances[0][0]
-                    cur_id2phrase = None
-                    if FLAGS.with_phrase_projection: (cur_phrase2id, cur_id2phrase) = cur_batch.phrase_vocabs[0]
-                    cur_sent = hyp.idx_seq_to_string(cur_passage, cur_id2phrase, word_vocab, FLAGS)
-                    outfile.write("Hyp-{}: ".format(j) + cur_sent.encode('utf-8') + " {}".format(hyp.avg_log_prob()) + "\n")
-                outfile.write("========\n")
                 outfile.flush()
             else: # beam search
                 print('Instance {}'.format(i))
                 hyps, dur = run_beam_search(sess, valid_graph, dec_word_vocab, cur_batch, FLAGS)
                 total_dur += dur
-                outfile.write("None\n")
+                outfile.write(cur_batch.id[0].encode('utf-8') + "\n")
                 outfile.write(cur_batch.target_ref[0].encode('utf-8') + "\n")
                 for j in xrange(1):
                     hyp = hyps[j]
-                    cur_passage = None #cur_batch.instances[0][0]
+                    cur_passage = cur_batch.source[0]
                     cur_id2phrase = None
-                    if FLAGS.with_phrase_projection: (cur_phrase2id, cur_id2phrase) = cur_batch.phrase_vocabs[0]
                     cur_sent = hyp.idx_seq_to_string(cur_passage, cur_id2phrase, dec_word_vocab, FLAGS)
                     outfile.write(cur_sent.encode('utf-8') + "\n")
                 outfile.write("--------\n")
                 outfile.write("========\n")
                 outfile.flush()
-        if mode.endswith('evaluate'):
-            ref_outfile.close()
-            pred_outfile.close()
-        else:
-            outfile.close()
+        outfile.close()
         print('Total encoding time {}'.format(total_dur))
 
 

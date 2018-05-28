@@ -22,10 +22,11 @@ def read_all_GenerationDatasets(inpath, isLower=True):
     for instance in dataset:
         sent1 = instance['amr'].strip()
         sent2 = instance['sent'].strip()
+        id = instance['id'] if 'id' in instance else None
         if sent1 == "" or sent2 == "":
             continue
         max_answer_len = max(max_answer_len, len(sent2.split())) # text2 is the sequence to be generated
-        all_instances.append((sent1, sent2))
+        all_instances.append((sent1, sent2, id))
     return all_instances, max_answer_len
 
 def read_generation_datasets_from_fof(fofpath, isLower=True):
@@ -42,7 +43,7 @@ def read_generation_datasets_from_fof(fofpath, isLower=True):
 
 def collect_vocabs(all_instances):
     all_words = set()
-    for (sent1, sent2) in all_instances:
+    for (sent1, sent2, id) in all_instances:
         all_words.update(re.split("\\s+", sent1))
         all_words.update(re.split("\\s+", sent2))
     all_chars = set()
@@ -58,7 +59,7 @@ class DataStream(object):
         if batch_size == -1: batch_size=options.batch_size
         # index tokens and filter the dataset
         instances = []
-        for (sent1, sent2) in all_questions:# sent1 is the long passage or article
+        for (sent1, sent2, id) in all_questions:# sent1 is the long passage or article
             sent1_idx = enc_word_vocab.to_index_sequence(sent1)
             sent2_idx = dec_word_vocab.to_index_sequence(sent2)
             oov_rate1 = 1.0*np.sum(x == enc_word_vocab.vocab_size for x in sent1_idx)/len(sent1_idx)
@@ -70,7 +71,7 @@ class DataStream(object):
                 print('==============')
             if options.max_passage_len != -1: sent1_idx = sent1_idx[:options.max_passage_len]
             if options.max_answer_len != -1: sent2_idx = sent2_idx[:options.max_answer_len]
-            instances.append((sent1_idx, sent2_idx, sent1, sent2))
+            instances.append((sent1_idx, sent2_idx, sent1, sent2, id))
 
         all_questions = instances
         instances = None
@@ -129,13 +130,14 @@ class Batch(object):
         self.batch_size = len(instances)
         self.vocab = word_vocab
 
-        self.source = None
-        self.target_ref = [inst[2] for inst in instances]
+        self.id = [inst[-1] for inst in instances]
+        self.source = [inst[-3] for inst in instances]
+        self.target_ref = [inst[-2] for inst in instances]
 
         # create length
         self.sent1_length = [] # [batch_size]
         self.sent2_length = [] # [batch_size]
-        for (sent1_idx, sent2_idx, _, _) in instances:
+        for (sent1_idx, sent2_idx, _, _, _) in instances:
             self.sent1_length.append(len(sent1_idx))
             self.sent2_length.append(min(len(sent2_idx)+1, options.max_answer_len))
         self.sent1_length = np.array(self.sent1_length, dtype=np.int32)
@@ -148,7 +150,7 @@ class Batch(object):
             self.sent1_word = [] # [batch_size, sent1_len]
             self.sent2_word = [] # [batch_size, sent2_len]
             self.sent2_input_word = []
-            for (sent1_idx, sent2_idx, _, _) in instances:
+            for (sent1_idx, sent2_idx, _, _, _) in instances:
                 self.sent1_word.append(sent1_idx)
                 self.sent2_word.append(sent2_idx+[end_id])
                 self.sent2_input_word.append([start_id]+sent2_idx)
@@ -163,126 +165,12 @@ class Batch(object):
         if options.with_char:
             self.sent1_char = [] # [batch_size, sent1_len]
             self.sent1_char_lengths = []
-            for (_, _, sent1, sent2) in instances:
+            for (_, _, sent1, sent2, _) in instances:
                 sent1_char_idx = char_vocab.to_character_matrix_for_list(sent1.split()[:options.max_passage_len])
                 self.sent1_char.append(sent1_char_idx)
                 self.sent1_char_lengths.append([len(x) for x in sent1_char_idx])
             self.sent1_char = padding_utils.pad_3d_vals_no_size(self.sent1_char)
             self.sent1_char_lengths = padding_utils.pad_2d_vals_no_size(self.sent1_char_lengths)
-
-    def build_phrase_vocabs(self):
-        self.phrase_vocabs = []
-        word_size = self.vocab.vocab_size + 1
-
-        self.phrase_starts = []
-        self.phrase_ends = []
-        self.phrase_idx = []
-        self.phrase_lengths = []
-        self.max_phrase_size = 0
-        if self.options.with_target_lattice:
-            self.target_lattices = []
-        for (sent1, sent2, sent3) in self.instances:
-            # collect all phrases
-            if self.options.withSyntaxChunk:
-                (cur_phrase_starts, cur_phrase_ends, _) = sent1.collect_all_syntax_chunks(self.options.max_chunk_len)
-            else:
-                (cur_phrase_starts, cur_phrase_ends) = sent1.collect_all_possible_chunks(self.options.max_chunk_len)
-
-            # collect phrase vocab and map phrase into phrase_id
-            cur_phrase2id = {}
-            cur_phrase_idx = []
-            for i in xrange(len(cur_phrase_starts)):
-                cur_start = cur_phrase_starts[i]
-                cur_end = cur_phrase_ends[i]
-                cur_phrase = sent1.getTokChunk(cur_start, cur_end)
-                cur_index = None
-                if cur_start==cur_end:
-                    cur_index = self.vocab.getIndex(cur_phrase)
-                elif cur_phrase2id.has_key(cur_phrase):
-                    cur_index = cur_phrase2id[cur_phrase]
-                else:
-                    cur_index = len(cur_phrase2id) + word_size
-                    cur_phrase2id[cur_phrase] = cur_index
-                cur_phrase_idx.append(cur_index)
-            cur_phrase_vocab = phrase_lattice_utils.prefix_tree(cur_phrase2id)
-            self.phrase_vocabs.append(cur_phrase_vocab)
-            self.phrase_starts.append(cur_phrase_starts)
-            self.phrase_ends.append(cur_phrase_ends)
-            self.phrase_idx.append(cur_phrase_idx)
-            self.phrase_lengths.append(len(cur_phrase_starts))
-            cur_phrase_size = len(cur_phrase2id)
-            if self.max_phrase_size<cur_phrase_size: self.max_phrase_size = cur_phrase_size
-
-            if self.options.with_target_lattice:
-                cur_lattice = phrase_lattice_utils.phrase_lattice(sent2.words, word_vocab=self.vocab, prefix_tree=cur_phrase_vocab)
-                self.target_lattices.append(cur_lattice)
-
-        self.phrase_starts = padding_utils.pad_2d_vals_no_size(self.phrase_starts) # [batch_size, phrase_size]
-        self.phrase_ends = padding_utils.pad_2d_vals_no_size(self.phrase_ends) # [batch_size, phrase_size]
-        self.phrase_idx = padding_utils.pad_2d_vals_no_size(self.phrase_idx) # [batch_size, phrase_size]
-        self.phrase_lengths = np.array(self.phrase_lengths, dtype=np.int32) # [batch_size]
-
-    def map_phrase_idx_to_text(self, samples):
-        '''
-        sample: [batch_size, length] of idx
-        '''
-        word_size = self.vocab.vocab_size + 1
-        all_words = []
-        all_word_idx = []
-        for i in xrange(len(samples)):
-#             cur_passage = self.instances[i][0]
-            cur_sample = samples[i]
-            if self.options.with_phrase_projection: cur_phrase_vocab = self.phrase_vocabs[i]
-            cur_words = []
-            cur_word_idx = []
-            for idx in cur_sample:
-                if idx<word_size:
-                    cur_word = self.vocab.getWord(idx)
-                elif not cur_phrase_vocab.has_phrase_id(idx): # if an OOV phrase is sampled, reset it to UNK
-                    idx = self.vocab.vocab_size
-                    cur_word = self.vocab.getWord(idx)
-                else:
-#                     if not cur_id2phrase.has_key(idx):
-#                         print(cur_id2phrase)
-#                         print(idx)
-#                     cur_word = cur_id2phrase[idx]
-                    cur_word = cur_phrase_vocab.get_phrase(idx)
-#                     if not self.options.withTextChunk:
-#                         items = re.split('-', cur_word)
-#                         cur_word = cur_passage.getTokChunk(int(items[0]), int(items[1]))
-                    idx = self.vocab.getIndex(re.split("\\s+", cur_word)[-1]) # take the last word of a phrase as the input word for decoding
-                cur_words.append(cur_word)
-                cur_word_idx.append(idx)
-            all_words.append(cur_words)
-            all_word_idx.append(cur_word_idx)
-        return (all_words, all_word_idx) # [batch_size, length]
-
-    def sample_a_partition(self, max_matching=False):
-        word_size = self.vocab.vocab_size + 1
-        sentences = []
-        prediction_lengths = []
-        generator_input_idx = []
-        generator_output_idx = []
-        for i, cur_lattice in enumerate(self.target_lattices):
-            (cur_phrases, cur_phrase_ids) = cur_lattice.sample_a_partition(max_matching=max_matching)
-            sentences.append(" ".join(cur_phrases))
-            prediction_lengths.append(len(cur_phrases))
-            generator_output_idx.append(cur_phrase_ids)
-            cur_input_idx = [self.gen_input_words[i][0]]
-            for cur_phrase, cur_phrase_id in zip(cur_phrases, cur_phrase_ids):
-                if cur_phrase_id<word_size:
-                    cur_word_id = cur_phrase_id
-                elif not self.phrase_vocabs[i].has_phrase_id(cur_phrase_id): # if an OOV phrase is sampled, reset it to UNK
-                    cur_word_id = self.vocab.vocab_size
-                else:
-                    cur_word_id = self.vocab.getIndex(re.split("\\s+", cur_phrase)[-1]) # take the last word of a phrase as the input word for decoding
-                cur_input_idx.append(cur_word_id)
-            generator_input_idx.append(cur_input_idx[:-1])
-
-        generator_input_idx = padding_utils.pad_2d_vals(generator_input_idx, len(generator_input_idx), self.options.max_answer_len)
-        generator_output_idx = padding_utils.pad_2d_vals(generator_output_idx, len(generator_output_idx), self.options.max_answer_len)
-        return (sentences, prediction_lengths, generator_input_idx, generator_output_idx)
-
 
 
 if __name__ == "__main__":

@@ -332,60 +332,14 @@ if __name__ == '__main__':
         devDataStream.reset()
         for i in range(total_num):
             cur_batch = devDataStream.get_batch(i)
-            if mode == 'pointwise':
-                (sentences, prediction_lengths, generator_input_idx,
-                 generator_output_idx) = search(sess, valid_graph, word_vocab, cur_batch, FLAGS, decode_mode=mode)
-                for j in xrange(cur_batch.batch_size):
-                    cur_total = cur_batch.answer_lengths[j]
-                    cur_correct = 0
-                    for k in xrange(cur_total):
-                        if generator_output_idx[j,k]== cur_batch.sent_out[j,k]: cur_correct+=1.0
-                    total += cur_total
-                    correct += cur_correct
-                    outfile.write(cur_batch.instances[j][1].tokText.encode('utf-8') + "\n")
-                    outfile.write(sentences[j].encode('utf-8') + "\n")
-                    outfile.write("========\n")
-                outfile.flush()
-                print('Current dev accuracy is %d/%d=%.2f' % (correct, total, correct/ float(total) * 100))
-            elif mode in ['greedy', 'multinomial']:
+            if mode in ['greedy', 'multinomial']:
                 print('Batch {}'.format(i))
                 (sentences, prediction_lengths, generator_input_idx,
-                 generator_output_idx) = search(sess, valid_graph, word_vocab, cur_batch, FLAGS, decode_mode=mode)
+                        generator_output_idx) = search(sess, valid_graph, word_vocab, cur_batch, FLAGS, decode_mode=mode)
                 for j in xrange(cur_batch.batch_size):
-                    outfile.write(cur_batch.instances[j][1].tokText.encode('utf-8') + "\n")
+                    outfile.write(cur_batch.target_ref[j].encode('utf-8') + "\n")
                     outfile.write(sentences[j].encode('utf-8') + "\n")
-                    outfile.write(str(prediction_lengths[j])+ "\n")
                     outfile.write("========\n")
-                outfile.flush()
-            elif mode == 'greedy_evaluate':
-                print('Batch {}'.format(i))
-                (sentences, prediction_lengths, generator_input_idx,
-                generator_output_idx) = search(sess, valid_graph, word_vocab, cur_batch, FLAGS, decode_mode="greedy")
-                for j in xrange(cur_batch.batch_size):
-                    ref_outfile.write(cur_batch.instances[j][1].tokText.encode('utf-8') + "\n")
-                    pred_outfile.write(sentences[j].encode('utf-8') + "\n")
-                ref_outfile.flush()
-                pred_outfile.flush()
-            elif mode == 'beam_evaluate':
-                print('Instance {}'.format(i))
-                ref_outfile.write(cur_batch.instances[0][1].tokText.encode('utf-8') + "\n")
-                ref_outfile.flush()
-                hyps = run_beam_search(sess, valid_graph, word_vocab, cur_batch, FLAGS)
-                cur_passage = cur_batch.instances[0][0]
-                cur_sent = hyps[0].idx_seq_to_string(cur_passage, word_vocab, FLAGS)
-                pred_outfile.write(cur_sent.encode('utf-8') + "\n")
-                pred_outfile.flush()
-            elif mode == 'beam_search':
-                print('Instance {}'.format(i))
-                hyps = run_beam_search(sess, valid_graph, word_vocab, cur_batch, FLAGS)
-                outfile.write("Input: " + cur_batch.instances[0][0].tokText.encode('utf-8') + "\n")
-                outfile.write("Truth: " + cur_batch.instances[0][1].tokText.encode('utf-8') + "\n")
-                for j in xrange(len(hyps)):
-                    hyp = hyps[j]
-                    cur_passage = cur_batch.instances[0][0]
-                    cur_sent = hyp.idx_seq_to_string(cur_passage, word_vocab, FLAGS)
-                    outfile.write("Hyp-{}: ".format(j) + cur_sent.encode('utf-8') + " {}".format(hyp.avg_log_prob()) + "\n")
-                outfile.write("========\n")
                 outfile.flush()
             else: # beam search
                 print('Instance {}'.format(i))
