@@ -53,9 +53,9 @@ class ModelGraph(object):
         if options.way_init_decoder == 'zero':
             new_c = tf.zeros([self.encoder.batch_size, options.gen_hidden_size])
             new_h = tf.zeros([self.encoder.batch_size, options.gen_hidden_size])
-        elif options.way_init_decoder == 'avg':
-            new_c = tf.reduce_mean(self.encoder.graph_cells, axis=1)
-            new_h = tf.reduce_mean(self.encoder.graph_hiddens, axis=1)
+        elif options.way_init_decoder == 'all':
+            new_c = tf.reduce_sum(self.encoder.graph_cells, axis=1)
+            new_h = tf.reduce_sum(self.encoder.graph_hiddens, axis=1)
         elif options.way_init_decoder == 'root':
             new_c = self.encoder.graph_cells[:,0,:]
             new_h = self.encoder.graph_hiddens[:,0,:]

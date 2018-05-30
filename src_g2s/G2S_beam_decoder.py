@@ -310,7 +310,7 @@ if __name__ == '__main__':
         ## remove word _embedding
         vars_ = {}
         for var in tf.all_variables():
-            if "word_embedding" in var.name: continue
+            if FLAGS.fix_word_vec and "word_embedding" in var.name: continue
             if not var.name.startswith("Model"): continue
             vars_[var.name.split(":")[0]] = var
         saver = tf.train.Saver(vars_)

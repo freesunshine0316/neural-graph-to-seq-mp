@@ -314,7 +314,7 @@ def fine_tune(sess, saver, FLAGS, log_file,
     ftDataStream, devDataStream, train_graph, valid_graph, path_prefix, best_accu, best_bleu):
     print('=====Start the fine tuning.')
     sys.stdout.flush()
-    max_steps = ftDataStream.get_num_batch() * 3
+    max_steps = ftDataStream.get_num_batch() * 1
     best_path = path_prefix + ".best.model"
     total_loss = 0.0
     start_time = time.time()
