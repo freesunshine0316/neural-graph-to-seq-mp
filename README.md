@@ -17,6 +17,14 @@ Our simplifier can be downloaded via [here](https://www.cs.rochester.edu/~lsong1
 
 Another alternative is to write your own data loading code according to the format of your own AMR data. 
 
+### Input data format
+The current input data format for our system is in JSON style demonstrated with the following sample:
+
+```
+[{"amr": "describe :arg0 ( person :name ( name :op1 ryan )  )  :arg1 person :arg2 genius",
+"sent": "ryan's description of himself: a genius."}]
+```
+
 ## Training
 
 First, modify the PYTHONPATH within [train_g2s.sh](./train_g2s.sh) (for our graph-to-string model) or [train_s2s.sh](./train_s2s.sh) (for baseline). <br>
