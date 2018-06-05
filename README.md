@@ -42,7 +42,7 @@ For instance, you can execute "./decode_g2s.sh bch20_lr1e3_l21e3"
 
 ### Pretrained model
 
-We releaes our recently pretrained model using gold plus 2M automatically-parsed AMRs [here](https://www.cs.rochester.edu/~lsong10/downloads/model_2m_silver.tgz). With this model, we observed a BLEU of 33.6, higher than our paper-reported number of 33.0.
+We releaes our recently pretrained model using gold plus 2M automatically-parsed AMRs [here](https://www.cs.rochester.edu/~lsong10/downloads/model_2m_silver.tgz). With this model, we observed a BLEU of *33.6*, which is higher than our paper-reported number of 33.0.
 
 ## Cite
 If you like our paper, please cite
