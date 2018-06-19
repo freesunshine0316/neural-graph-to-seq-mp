@@ -4,7 +4,7 @@ This repository contains the code for our paper [A Graph-to-Sequence Model for A
 
 The code is developed under TensorFlow 1.4.1 
 
-Please create issues if there's any questions! That makes things more tractable. 
+Please create issues if there are any questions! This can make things more tractable. 
 
 ## Data precrocessing
 Our current data loading [code](./src_g2s/G2S_data_stream.py) requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the following AMR
