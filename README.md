@@ -1,6 +1,6 @@
 # Neural Graph to Sequence Model
 
-This repository contains the code for our paper [A Graph-to-Sequence Model for AMR-to-Text Generation](https://arxiv.org/pdf/1805.02473.pdf) in ACL 2018
+This repository contains the code for our paper [A Graph-to-Sequence Model for AMR-to-Text Generation](https://arxiv.org/abs/1805.02473) in ACL 2018
 
 The code is developed under TensorFlow 1.4.1. 
 We shared our pretrained model along this repository. 
