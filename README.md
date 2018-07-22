@@ -51,6 +51,13 @@ Finally, execute the corresponding script file, such as "./train_g2s.sh".
 
 In this setting, we follow [Konstas et al., (2017)](https://arxiv.org/abs/1704.08381) to take the large-scale automatic data as the training set, with the original gold data being the finetune set. To train in this way, you need add a new field "finetune_path" in the configuration file and point it to the gold data. Then, point "train_path" to the automatic data. 
 
+For training on the gold data only, we use an initial learning rate of 1e-3 and L2 normalization of 1e-3. We then lower the learning rate to be 8e-4, 5e-4 and 2e-4 after a number of epoches. 
+
+For training on both gold and automatic data, the initial learning rate and L2 normalization are 5e-4 and 1e-8. We also lower the learning rate during training. 
+
+The idea of lowering learning rate was first introduced by Konstas et al., (2017).
+
+
 ## Decoding with a pretained model
 
 Simply execute the corresponding decoding script with one argument being the identifier of the model you want to use.
