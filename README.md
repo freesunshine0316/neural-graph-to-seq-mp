@@ -41,13 +41,16 @@ Please note that our simplifier *does not* do anonymization, which is introduced
 Another alternative is to write your own data loading code according to the format of your own AMR data. 
 
 ### Input data format
-The current input data format for our system is in JSON style demonstrated with the following sample:
+After simplifying AMRs, you can merge them with the corresponding sentences into a JSON file, which is the input data format for our system, the following sample below demonstrates one case:
 ```
 [{"amr": "describe :arg0 ( person :name ( name :op1 ryan )  )  :arg1 person :arg2 genius",
 "sent": "ryan's description of himself: a genius.",
 "id": "demo"}]
 ```
 In general, the JSON file contains a list of instances, and each instance is a dictionary with fields of "amr", "sent" and "id"(optional).
+
+### Vocabulary extraction
+After having the JSON files, you can extract vocabularies with our released scripts in the [data](./data/) sub-directory.
 
 ## Training
 
