@@ -3,13 +3,13 @@
     "finetune_path": "data/training.json",
     "test_path": "data/dev.json",
     "word_vec_path": "data/vectors_RwNN.txt.st",
-    "suffix": "silver_2m",
+    "suffix": "silver_2m_sz1000",
     "model_dir": "logs_g2s",
     "isLower": true,
 
     "pointer_gen": true,
     "use_coverage": true,
-    "attention_vec_size": 600,
+    "attention_vec_size": 1000,
     "batch_size": 100,
     "beam_size": 5,
 
@@ -37,12 +37,12 @@
     "attention_type": "hidden",
     "way_init_decoder": "all",
     "edgelabel_dim": 100,
-    "neighbor_vector_dim": 600,
+    "neighbor_vector_dim": 1000,
     "fix_word_vec": false,
     "compress_input": false,
     "compress_input_dim": 300,
 
-    "gen_hidden_size": 600,
+    "gen_hidden_size": 1000,
     "num_softmax_samples": 100,
     "mode": "ce_train",
 

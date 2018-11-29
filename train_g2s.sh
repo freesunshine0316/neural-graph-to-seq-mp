@@ -5,5 +5,5 @@
 
 export PYTHONPATH=$PYTHONPATH:/home/lsong10/ws/exp.graph_to_seq/neural-graph-to-seq-mp
 
-python src_g2s/G2S_trainer.py --config_path config_g2s.json
+python src_g2s/G2S_trainer.py --config_path logs_g2s/G2S.silver_2m.config.json
 
