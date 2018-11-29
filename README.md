@@ -51,6 +51,7 @@ In general, the JSON file contains a list of instances, and each instance is a d
 
 ### Vocabulary extraction
 After having the JSON files, you can extract vocabularies with our released scripts in the [data](./data/) sub-directory.
+We also encourage you to write your own scripts.
 
 ## Training
 
