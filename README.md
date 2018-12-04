@@ -9,7 +9,7 @@ Due to the compitibility reason of TensorFlow, it may not be loaded by some lowe
 Please create issues if there are any questions! This can make things more tractable. 
 
 ## Release of 2M automatically parsed data (Dec. 4th, 2018)
-I realize that releasing our 2M data can be helpful for others, thus we release the data, which can be downloaded from [here](https://www.cs.rochester.edu/~lsong10/downloads/2m.json)
+I realize that releasing our 2M data can be helpful for others, thus we release the data, which can be downloaded from [here](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz)
 
 ## Data precrocessing
 Our current data loading [code](./src_g2s/G2S_data_stream.py) requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the following AMR
