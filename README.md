@@ -8,6 +8,9 @@ Due to the compitibility reason of TensorFlow, it may not be loaded by some lowe
 
 Please create issues if there are any questions! This can make things more tractable. 
 
+## Be careful about your tokenizer (Feb. 27th, 2019)
+We use the [PTB_tokenizer](https://nlp.stanford.edu/software/tokenizer.shtml) from Stanford corenlp to preprocess our data. If you plan to use our pretrained model, please be careful on the tokenizer you use. Also, be sure to keep the original word case when doing your preprocessing, as the preprocessing tools are sensitive to that too.
+
 ## Release of 2M automatically parsed data (Dec. 4th, 2018)
 I realize that releasing our 2M data can be helpful for others, thus we release the data, which can be downloaded from [here](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz)
 
