@@ -13,12 +13,11 @@ We use the [PTB_tokenizer](https://nlp.stanford.edu/software/tokenizer.shtml) fr
 Be careful on the word case during preprocessing, as your preprocessing tool may be sensitive to that.
 
 ## Release of 2M automatically parsed data (Dec. 4th, 2018)
-We release our 2M sentences with their automatically parsed AMRs to the public.
-It can be downloaded at [here](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz)
+We release our 2M sentences with their automatically parsed AMRs to the public, which can be downloaded from [here](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz)
 
 ## Public English AMR banks
-There are several AMR bank in the [AMR website@ISI](https://amr.isi.edu/download.html).
-One public-available one is the [little prince](https://amr.isi.edu/download/amr-bank-struct-v1.6.txt)).
+There are several AMR banks on the [AMR website@ISI](https://amr.isi.edu/download.html).
+One public-available AMR bank is the [little prince](https://amr.isi.edu/download/amr-bank-struct-v1.6.txt)).
 
 ## Data precrocessing
 The [data loader](./src_g2s/G2S_data_stream.py) of our model requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the following AMR
