@@ -8,16 +8,24 @@ Due to the compitibility reason of TensorFlow, it may not be loaded by some lowe
 
 Please create issues if there are any questions! This can make things more tractable. 
 
-## Be careful about your tokenizer (Feb. 27th, 2019)
+## Update logs
+
+### Be careful about your tokenizer (Feb. 27th, 2019)
 We use the [PTB_tokenizer](https://nlp.stanford.edu/software/tokenizer.shtml) from Stanford corenlp to preprocess our data. If you plan to use our pretrained model, please be careful on the tokenizer you use. 
-Be careful on the word case during preprocessing, as your preprocessing tool may be sensitive to that.
+Also, be careful to keep the words cased during preprocessing, as the PTB_tokenizer is sensitive to that.
 
-## Release of 2M automatically parsed data (Dec. 4th, 2018)
-We release our 2M sentences with their automatically parsed AMRs to the public, which can be downloaded from [here](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz)
+### Release of 2M automatically parsed data (Dec. 4th, 2018)
+We release our [2M sentences with their automatically parsed AMRs](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz) to the public.
 
-## Public English AMR banks
-There are several AMR banks on the [AMR website@ISI](https://amr.isi.edu/download.html).
-One public-available AMR bank is the [little prince](https://amr.isi.edu/download/amr-bank-struct-v1.6.txt) corpus.
+## About AMR
+
+AMR is a graph-based semantic formalism, which can unified representations for several sentences of the same meaning.
+Comparing with other structures, such as dependency and semantic roles, the AMR graphs have several key differences:
+* AMRs only focus on concepts and their relations, so no function words are included. Actually the edge labels serve the role of function words by representing the concept-to-concept relations.
+* Inflections are dropped when converting a noun, a verb or named entity into a AMR concept. Sometimes a synonym is used rather than the original word. This helps to make more unified AMRs, making 1-to-many correspondences from AMRs to sentences.
+* Relation tags (edge labels) are predefined and are not extracted from text, such as the way OpenIE does.
+More details are in the official AMR page [AMR website@ISI](https://amr.isi.edu/download.html).
+Also it has the public-available AMR bank: [little prince](https://amr.isi.edu/download/amr-bank-struct-v1.6.txt).
 
 ## Data precrocessing
 The [data loader](./src_g2s/G2S_data_stream.py) of our model requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the following AMR
