@@ -66,7 +66,7 @@ The JSON file is the actual input to the system.
 Its format is shown with the following sample:
 ```
 [{"amr": "describe :arg0 ( person :name ( name :op1 ryan )  )  :arg1 person :arg2 genius",
-"sent": "ryan's description of himself: a genius.",
+"sent": "ryan 's description of himself : a genius .",
 "id": "demo"}]
 ```
 In general, the JSON file contains a list of instances, and each instance is a dictionary with fields of "amr", "sent" and "id"(optional).
