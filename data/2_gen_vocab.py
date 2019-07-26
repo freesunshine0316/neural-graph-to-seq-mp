@@ -38,6 +38,6 @@ update_vocab('training.json', vocab, vocab_edge, vocab_node)
 print len(vocab), len(vocab_edge), len(vocab_node)
 
 output(vocab, 'vocab.txt')
-output(vocab_edge, 'vocab_edge.txt')
-output(vocab_node, 'vocab_node.txt')
+#output(vocab_edge, 'vocab_edge.txt')
+#output(vocab_node, 'vocab_node.txt')
 
