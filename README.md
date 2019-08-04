@@ -24,8 +24,9 @@ Comparing with other structures, such as dependency and semantic roles, the AMR 
 * AMRs only focus on concepts and their relations, so no function words are included. Actually the edge labels serve the role of function words.
 * Inflections are dropped when converting a noun, a verb or named entity into a AMR concept. Sometimes a synonym is used instead of the original word. This makes more unified AMRs so that each AMR graph can represent more sentences.
 * Relation tags (edge labels) are predefined and are not extracted from text (like the way OpenIE does).
-More details are in the official AMR page [AMR website@ISI](https://amr.isi.edu/download.html).
-Also it has the public-available AMR bank: [little prince](https://amr.isi.edu/download/amr-bank-struct-v1.6.txt).
+More details are in the official AMR page [AMR website@ISI](https://amr.isi.edu/download.html), where
+you can download the public-available AMR bank: [little prince](https://amr.isi.edu/download/amr-bank-struct-v1.6.txt).
+Try it for fun!
 
 ## Data precrocessing
 The [data loader](./src_g2s/G2S_data_stream.py) of our model requires simplified AMR graphs where variable tags, sense tags and quotes are removed. For example, the following AMR
