@@ -10,6 +10,9 @@ Please create issues if there are any questions! This can make things more tract
 
 ## Update logs
 
+### RESULTS ON WebNLG datasets (Aug. 4th, 2019)
+Following the same setting (such as data preprocessing) of [Marcheggiani and Perez-Beltrachini (INLG 2019)](https://www.aclweb.org/anthology/W18-6501), our model achieves a BLEU score of *64.2*.
+
 ### Be careful about your tokenizer (Feb. 27th, 2019)
 We use the [PTB_tokenizer](https://nlp.stanford.edu/software/tokenizer.shtml) from Stanford corenlp to preprocess our data. If you plan to use our pretrained model, please be careful on the tokenizer you use. 
 Also, be careful to keep the words cased during preprocessing, as the PTB_tokenizer is sensitive to that.
