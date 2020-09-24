@@ -19,8 +19,8 @@ For another widely used AMR dataset, LDC2017T10, our model achieves a similar BL
 We use the [PTB_tokenizer](https://nlp.stanford.edu/software/tokenizer.shtml) from Stanford corenlp to preprocess our data. If you plan to use our pretrained model, please be careful on the tokenizer you use. 
 Also, be careful to keep the words cased during preprocessing, as the PTB_tokenizer is sensitive to that.
 
-### Release of 2M automatically parsed data (Dec. 4th, 2018)
-We release our [2M sentences with their automatically parsed AMRs](https://www.cs.rochester.edu/~lsong10/downloads/2m.json.gz) to the public.
+### Release of 2M automatically parsed data (link updated on Sep. 24th, 2020)
+We release our [2M sentences with their automatically parsed AMRs](https://drive.google.com/file/d/1mmTZFxRdBFOXbH6FCViQ30bVRIvGrwvx/view?usp=sharing) to the public.
 
 ## About AMR
 
