@@ -10,6 +10,10 @@ Please create issues if there are any questions! This can make things more tract
 
 ## Update logs
 
+### Link update for silver AMR data and AMR simplifier (Sep. 30th, 2020)
+Due to the long period since my PhD graduation, my old homepage cannot be accessed now.
+I move data the scripts to Google Drive for download now.
+
 ### Results on WebNLG and LDC2017T10 datasets (Aug. 4th, 2019)
 Following the same setting (such as data preprocessing) of [Marcheggiani and Perez-Beltrachini (INLG 2019)](https://www.aclweb.org/anthology/W18-6501), our model achieves a BLEU score of *64.2* on WebNLG dataset.
 
@@ -52,7 +56,7 @@ before being consumed by our model.
 
 We provide our scripts for AMR simplification.
 First, you need to make each AMR into a single line, where our released [script](./AMR_multiline_to_singleline.py) may serve your goal (You may need to slightly modify it).
-Second, to simplify the single-line AMRs, we release our tool that can be downloaded [here](https://www.cs.rochester.edu/~lsong10/downloads/amr_simplifier.tgz).
+Second, to simplify the single-line AMRs, we release our tool that can be downloaded [here](https://drive.google.com/file/d/1PE8b44-H3Hu4I2Xf1XDAPFhH-GonR43i/view?usp=sharing).
 It is adapted from the [NeuralAMR](https://github.com/sinantie/NeuralAmr) system.
 To run our simplifier on a file ```demo.amr```, simply execute
 ```
