@@ -10,9 +10,10 @@ Please create issues if there are any questions! This can make things more tract
 
 ## Update logs
 
-### Link update for silver AMR data and AMR simplifier (Sep. 30th, 2020)
+### Link update for silver AMR data and AMR simplifier (Oct. 13th, 2020)
 Due to the long period since my PhD graduation, my old homepage cannot be accessed now.
-I move data the scripts to Google Drive for download now.
+I've moved data and scripts to Google Drive for download now.
+Pretrained models will be uploaded to Google Drive soon.
 
 ### Results on WebNLG and LDC2017T10 datasets (Aug. 4th, 2019)
 Following the same setting (such as data preprocessing) of [Marcheggiani and Perez-Beltrachini (INLG 2019)](https://www.aclweb.org/anthology/W18-6501), our model achieves a BLEU score of *64.2* on WebNLG dataset.
