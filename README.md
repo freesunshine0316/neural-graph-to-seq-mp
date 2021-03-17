@@ -113,6 +113,7 @@ Please make sure you use the associated word vectors not others, because the pre
 ### Pretrained model
 
 We release a pretrained model (and word vectors) using gold plus 2M automatically-parsed AMRs [here](https://drive.google.com/file/d/1cP_VrGTGlRPdNOt2rV2wdOBnHrYDB10j/view?usp=sharing). With this model, we observed a BLEU of *33.6*, which is higher than our paper-reported number of 33.0. The pretrained model with only gold data is [here](https://drive.google.com/file/d/186snRVgx5nSLbAbgU9anbu4OMvrCTUP-/view?usp=sharing). It reports a test BLEU score of 23.3.
+The corresponding word-embedding file is [here](https://drive.google.com/file/d/1XhCW0eI1PQY51o_gB_MyG1DKsOG0bjIu/view?usp=sharing).
 
 ## Cite
 If you like our paper, please cite
